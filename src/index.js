@@ -74,13 +74,6 @@ function logRequestDetails(request, backendUrl, requestBody) {
     headers[sanitizedKey] = sanitizedValue;
   }
   
-  let parsedBody;
-  try {
-    parsedBody = JSON.parse(requestBody);
-  } catch {
-    parsedBody = requestBody;
-  }
-  
   // Create log entry matching BigQuery schema
   const logEntry = {
     log_id: generateLogId(),
@@ -90,7 +83,7 @@ function logRequestDetails(request, backendUrl, requestBody) {
     request_url: request.url,
     backend_url: backendUrl,
     request_headers: headers,
-    request_body: parsedBody,
+    request_body: requestBody, // Store as TEXT (raw string)
     created_at: new Date().toISOString(),
     partition_date: new Date().toISOString().split('T')[0]
   };
@@ -121,6 +114,13 @@ function logRequestDetails(request, backendUrl, requestBody) {
   }
   
   // Also log to STDOUT for local development and log-tailing - human readable format
+  let parsedBody;
+  try {
+    parsedBody = JSON.parse(requestBody);
+  } catch {
+    parsedBody = requestBody;
+  }
+  
   console.log(JSON.stringify({
     timestamp: new Date().toISOString(),
     type: "REQUEST",
@@ -304,13 +304,6 @@ async function logResponseDetails(response, responseBody) {
       return;
     }
     
-    let parsedBody;
-    try {
-      parsedBody = JSON.parse(responseBody);
-    } catch {
-      parsedBody = responseBody;
-    }
-    
     const responseLog = {
       log_id: generateLogId(),
       timestamp: new Date().toISOString(),
@@ -318,7 +311,7 @@ async function logResponseDetails(response, responseBody) {
       response_status: response.status,
       response_status_text: response.statusText,
       response_headers: headers,
-      response_body: parsedBody,
+      response_body: responseBody, // Store as TEXT (raw string)
       created_at: new Date().toISOString(),
       partition_date: new Date().toISOString().split('T')[0]
     };
@@ -342,6 +335,13 @@ async function logResponseDetails(response, responseBody) {
     }
     
     // Also log to STDOUT for local development and log-tailing - human readable format
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(responseBody);
+    } catch {
+      parsedBody = responseBody;
+    }
+    
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
       type: "RESPONSE",

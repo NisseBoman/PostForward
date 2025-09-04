@@ -1,7 +1,7 @@
 -- BigQuery Schema for PostForward Logs
 -- This schema handles all log types: REQUEST, RESPONSE, BACKEND_ERROR, RESPONSE_ERROR, RESPONSE_LOG_ERROR
 
-CREATE TABLE IF NOT EXISTS `your-project.your-dataset.postforward_logs`
+CREATE TABLE IF NOT EXISTS `se-development-9566.nboman_demo.vladlen_dataset`
 (
   -- Common fields for all log types
   log_id STRING NOT NULL,
@@ -15,13 +15,13 @@ CREATE TABLE IF NOT EXISTS `your-project.your-dataset.postforward_logs`
   request_url STRING,
   backend_url STRING,
   request_headers JSON,
-  request_body JSON,
+  request_body TEXT,
   
   -- Response-specific fields (for RESPONSE log_type)
   response_status INT64,
   response_status_text STRING,
   response_headers JSON,
-  response_body JSON,
+  response_body TEXT,
   
   -- Error-specific fields (for all ERROR log_types)
   error_message STRING,
@@ -40,7 +40,7 @@ SELECT
   request_method,
   response_status,
   error_message
-FROM `your-project.your-dataset.postforward_logs`
+FROM `se-development-9566.nboman_demo.vladlen_dataset`
 WHERE partition_date = CURRENT_DATE()
 ORDER BY timestamp DESC;
 
@@ -49,7 +49,7 @@ SELECT
   log_type,
   COUNT(*) as log_count,
   DATE(timestamp) as log_date
-FROM `your-project.your-dataset.postforward_logs`
+FROM `se-development-9566.nboman_demo.vladlen_dataset`
 WHERE partition_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
 GROUP BY log_type, DATE(timestamp)
 ORDER BY log_date DESC, log_count DESC;
@@ -63,7 +63,7 @@ SELECT
   response_status,
   response_status_text,
   response_body
-FROM `your-project.your-dataset.postforward_logs`
+FROM `se-development-9566.nboman_demo.vladlen_dataset`
 WHERE log_type = 'RESPONSE' 
   AND response_status >= 400
   AND partition_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
@@ -74,7 +74,7 @@ SELECT
   error_type,
   error_message,
   COUNT(*) as error_count
-FROM `your-project.your-dataset.postforward_logs`
+FROM `se-development-9566.nboman_demo.vladlen_dataset`
 WHERE log_type LIKE '%ERROR%'
   AND partition_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
 GROUP BY error_type, error_message
@@ -85,12 +85,12 @@ SELECT
   request_url,
   COUNT(*) as request_count,
   AVG(TIMESTAMP_DIFF(
-    (SELECT timestamp FROM `your-project.your-dataset.postforward_logs` l2 
+    (SELECT timestamp FROM `se-development-9566.nboman_demo.vladlen_dataset` l2 
      WHERE l2.log_type = 'RESPONSE' AND l2.log_id = l1.log_id), 
     l1.timestamp, 
     MILLISECOND
   )) as avg_response_time_ms
-FROM `your-project.your-dataset.postforward_logs` l1
+FROM `se-development-9566.nboman_demo.vladlen_dataset` l1
 WHERE l1.log_type = 'REQUEST'
   AND partition_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
 GROUP BY request_url
@@ -101,7 +101,7 @@ SELECT
   JSON_EXTRACT_SCALAR(request_headers, '$.content_type') as content_type,
   JSON_EXTRACT_SCALAR(request_headers, '$.user_agent') as user_agent,
   COUNT(*) as request_count
-FROM `your-project.your-dataset.postforward_logs`
+FROM `se-development-9566.nboman_demo.vladlen_dataset`
 WHERE log_type = 'REQUEST'
   AND partition_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
 GROUP BY content_type, user_agent
@@ -113,7 +113,23 @@ SELECT
   COUNT(*) as count,
   MIN(timestamp) as first_log,
   MAX(timestamp) as last_log
-FROM `your-project.your-dataset.postforward_logs`
+FROM `se-development-9566.nboman_demo.vladlen_dataset`
 WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 HOUR)
 GROUP BY log_type
 ORDER BY count DESC;
+
+-- 8. Parse JSON from TEXT fields (when needed)
+SELECT 
+  log_id,
+  timestamp,
+  request_method,
+  request_url,
+  -- Parse JSON from TEXT field for analysis
+  JSON_EXTRACT_SCALAR(request_body, '$.message') as message_field,
+  JSON_EXTRACT_SCALAR(request_body, '$.user_id') as user_id,
+  request_body -- Raw TEXT for debugging
+FROM `se-development-9566.nboman_demo.vladlen_dataset`
+WHERE log_type = 'REQUEST'
+  AND partition_date = CURRENT_DATE()
+  AND JSON_VALID(request_body) = true -- Only valid JSON
+LIMIT 10;
