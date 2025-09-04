@@ -1,10 +1,6 @@
 /// <reference types="@fastly/js-compute" />
 
 import { Logger } from "fastly:logger";
-import { env } from "fastly:env";
-
-// Get service version from Fastly environment variable
-const SERVICE_VERSION = env("FASTLY_SERVICE_VERSION") || "unknown";
 
 // Create a logger instance
 // IMPORTANT: The name "postforward" must match the logging endpoint name configured in Fastly control panel
@@ -12,7 +8,8 @@ const SERVICE_VERSION = env("FASTLY_SERVICE_VERSION") || "unknown";
 // 1. Go to Fastly control panel → Your Service → Edit Configuration → Logging → Create Endpoint
 // 2. Choose your logging provider (e.g., Google BigQuery, Splunk, etc.)
 // 3. Name the endpoint "postforward" (or change this code to match your endpoint name)
-// 4. Configure the endpoint settings and deploy
+// 4. Configure the endpoint settings and deploy.
+// 5. make sure you have the correct dataset that matches the code. 
 const logger = new Logger("postforward");
 
 addEventListener("fetch", (event) => event.respondWith(handleRequest(event)));
@@ -23,10 +20,7 @@ async function handleRequest(event) {
   // Only handle POST requests
   if (request.method !== "POST") {
     return new Response("Method not allowed", { 
-      status: 405,
-      headers: {
-        'x-serviceVersion': SERVICE_VERSION
-      }
+      status: 405
     });
   }
 
@@ -46,8 +40,8 @@ async function handleRequest(event) {
     // Log response details
     logResponseDetails(response, responseBody);
     
-    // Add service version header and return response
-    return addServiceVersionHeader(response);
+    // Return the response
+    return response;
   } catch (error) {
     const errorLog = {
       log_id: generateLogId(),
@@ -58,7 +52,7 @@ async function handleRequest(event) {
       created_at: new Date().toISOString(),
       partition_date: new Date().toISOString().split('T')[0]
     };
-    const errorMessage = JSON.stringify(errorLog, null, 2);
+    const errorMessage = JSON.stringify(errorLog);
     logger.log(errorMessage);
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
@@ -66,10 +60,7 @@ async function handleRequest(event) {
       error: error.message
     }, null, 2));
     return new Response("Internal Server Error", { 
-      status: 500,
-      headers: {
-        'x-serviceVersion': SERVICE_VERSION
-      }
+      status: 500
     });
   }
 }
@@ -101,7 +92,7 @@ function logRequestDetails(request, backendUrl, requestBody) {
     partition_date: new Date().toISOString().split('T')[0]
   };
   
-  const logMessage = JSON.stringify(logEntry, null, 2);
+  const logMessage = JSON.stringify(logEntry);
   
   // Validate JSON before logging to prevent truncation issues
   try {
@@ -123,7 +114,7 @@ function logRequestDetails(request, backendUrl, requestBody) {
       created_at: new Date().toISOString(),
       partition_date: new Date().toISOString().split('T')[0]
     };
-    logger.log(JSON.stringify(fallbackLog, null, 2));
+    logger.log(JSON.stringify(fallbackLog));
   }
   
   // Also log to STDOUT for local development and log-tailing - human readable format
@@ -145,18 +136,6 @@ function generateLogId() {
   const timestamp = Date.now();
   const randomPart = Math.random().toString(36).substring(2, 11).replace(/[^a-zA-Z0-9]/g, ''); // Ensure only alphanumeric
   return `log-${timestamp}-${randomPart}`;
-}
-
-// Helper function to add service version header to responses
-function addServiceVersionHeader(response) {
-  const newHeaders = new Headers(response.headers);
-  newHeaders.set('x-serviceVersion', SERVICE_VERSION);
-  
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: newHeaders
-  });
 }
 
 async function forwardRequest(request, backendUrl, requestBody) {
@@ -183,7 +162,7 @@ async function forwardRequest(request, backendUrl, requestBody) {
         created_at: new Date().toISOString(),
         partition_date: new Date().toISOString().split('T')[0]
       };
-      const errorMessage = JSON.stringify(errorLog, null, 2);
+      const errorMessage = JSON.stringify(errorLog);
       
       // Validate JSON before logging
       try {
@@ -198,7 +177,7 @@ async function forwardRequest(request, backendUrl, requestBody) {
           created_at: new Date().toISOString(),
           partition_date: new Date().toISOString().split('T')[0]
         };
-        logger.log(JSON.stringify(fallbackLog, null, 2));
+        logger.log(JSON.stringify(fallbackLog));
       }
       console.log(JSON.stringify({
         timestamp: new Date().toISOString(),
@@ -229,7 +208,7 @@ async function forwardRequest(request, backendUrl, requestBody) {
       created_at: new Date().toISOString(),
       partition_date: new Date().toISOString().split('T')[0]
     };
-    const errorMessage = JSON.stringify(errorLog, null, 2);
+    const errorMessage = JSON.stringify(errorLog);
     
     // Validate JSON before logging
     try {
@@ -244,7 +223,7 @@ async function forwardRequest(request, backendUrl, requestBody) {
         created_at: new Date().toISOString(),
         partition_date: new Date().toISOString().split('T')[0]
       };
-      logger.log(JSON.stringify(fallbackLog, null, 2));
+      logger.log(JSON.stringify(fallbackLog));
     }
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
@@ -257,10 +236,7 @@ async function forwardRequest(request, backendUrl, requestBody) {
       return { 
         response: new Response(`Network error: Unable to reach backend at ${backendUrl}`, { 
           status: 503,
-          statusText: "Service Unavailable",
-          headers: {
-            'x-serviceVersion': SERVICE_VERSION
-          }
+          statusText: "Service Unavailable"
         }),
         responseBody: `Network error: Unable to reach backend at ${backendUrl}`
       };
@@ -270,10 +246,7 @@ async function forwardRequest(request, backendUrl, requestBody) {
     return { 
       response: new Response(`Backend error: ${error.message}`, { 
         status: 502,
-        statusText: "Bad Gateway",
-        headers: {
-          'x-serviceVersion': SERVICE_VERSION
-        }
+        statusText: "Bad Gateway"
       }),
       responseBody: `Backend error: ${error.message}`
     };
@@ -299,7 +272,7 @@ async function logResponseDetails(response, responseBody) {
         created_at: new Date().toISOString(),
         partition_date: new Date().toISOString().split('T')[0]
       };
-      const errorMessage = JSON.stringify(errorLog, null, 2);
+      const errorMessage = JSON.stringify(errorLog);
       
       // Validate JSON before logging
       try {
@@ -314,7 +287,7 @@ async function logResponseDetails(response, responseBody) {
           created_at: new Date().toISOString(),
           partition_date: new Date().toISOString().split('T')[0]
         };
-        logger.log(JSON.stringify(fallbackLog, null, 2));
+        logger.log(JSON.stringify(fallbackLog));
       }
       console.log(JSON.stringify({
         timestamp: new Date().toISOString(),
@@ -344,7 +317,7 @@ async function logResponseDetails(response, responseBody) {
       partition_date: new Date().toISOString().split('T')[0]
     };
     
-    const logMessage = JSON.stringify(responseLog, null, 2);
+    const logMessage = JSON.stringify(responseLog);
     
     // Validate JSON before logging
     try {
@@ -359,7 +332,7 @@ async function logResponseDetails(response, responseBody) {
         created_at: new Date().toISOString(),
         partition_date: new Date().toISOString().split('T')[0]
       };
-      logger.log(JSON.stringify(fallbackLog, null, 2));
+      logger.log(JSON.stringify(fallbackLog));
     }
     
     // Also log to STDOUT for local development and log-tailing - human readable format
@@ -381,7 +354,7 @@ async function logResponseDetails(response, responseBody) {
       created_at: new Date().toISOString(),
       partition_date: new Date().toISOString().split('T')[0]
     };
-    const errorLogMessage = JSON.stringify(errorLog, null, 2);
+    const errorLogMessage = JSON.stringify(errorLog);
     
     // Validate JSON before logging
     try {
@@ -396,7 +369,7 @@ async function logResponseDetails(response, responseBody) {
         created_at: new Date().toISOString(),
         partition_date: new Date().toISOString().split('T')[0]
       };
-      logger.log(JSON.stringify(fallbackLog, null, 2));
+      logger.log(JSON.stringify(fallbackLog));
     }
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
