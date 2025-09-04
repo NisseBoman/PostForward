@@ -109,7 +109,6 @@ curl -X POST https://your-service.edgecompute.app/webhook \
 
 ### Prerequisites
 
-- Node.js 18+ 
 - Fastly CLI (`@fastly/cli`)
 - Fastly account with Compute access
 
