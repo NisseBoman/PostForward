@@ -83,7 +83,7 @@ function logRequestDetails(request, backendUrl, requestBody) {
     request_url: request.url,
     backend_url: backendUrl,
     request_headers: headers,
-    request_body: requestBody, // Store as TEXT (raw string)
+    request_body: truncateString(requestBody, 2000000), // Truncate to 2MB limit
     created_at: new Date().toISOString(),
     partition_date: new Date().toISOString().split('T')[0]
   };
@@ -139,6 +139,16 @@ function generateLogId() {
   const timestamp = Date.now();
   const randomPart = Math.random().toString(36).substring(2, 11).replace(/[^a-zA-Z0-9]/g, ''); // Ensure only alphanumeric
   return `log-${timestamp}-${randomPart}`;
+}
+
+// Helper function to truncate strings to BigQuery STRING limits
+function truncateString(str, maxLength = 2000000) {
+  if (!str || typeof str !== 'string') return str;
+  if (str.length <= maxLength) return str;
+  
+  // Truncate and add indicator
+  const truncated = str.substring(0, maxLength - 100); // Leave room for truncation message
+  return `${truncated}\n\n... [TRUNCATED: ${str.length} chars total, showing first ${truncated.length} chars]`;
 }
 
 async function forwardRequest(request, backendUrl, requestBody) {
@@ -311,7 +321,7 @@ async function logResponseDetails(response, responseBody) {
       response_status: response.status,
       response_status_text: response.statusText,
       response_headers: headers,
-      response_body: responseBody, // Store as TEXT (raw string)
+      response_body: truncateString(responseBody, 2000000), // Truncate to 2MB limit
       created_at: new Date().toISOString(),
       partition_date: new Date().toISOString().split('T')[0]
     };

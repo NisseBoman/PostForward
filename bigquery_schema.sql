@@ -15,13 +15,13 @@ CREATE TABLE IF NOT EXISTS `se-development-9566.nboman_demo.vladlen_dataset`
   request_url STRING,
   backend_url STRING,
   request_headers JSON,
-  request_body TEXT,
+  request_body STRING,
   
   -- Response-specific fields (for RESPONSE log_type)
   response_status INT64,
   response_status_text STRING,
   response_headers JSON,
-  response_body TEXT,
+  response_body STRING,
   
   -- Error-specific fields (for all ERROR log_types)
   error_message STRING,
