@@ -75,8 +75,7 @@ function logRequestDetails(request, backendUrl, requestBody) {
   try {
     parsedBody = JSON.parse(requestBody);
   } catch {
-    // If body is not JSON, truncate it to prevent issues
-    parsedBody = requestBody.length > 10000 ? requestBody.substring(0, 10000) + "..." : requestBody;
+    parsedBody = requestBody;
   }
   
   // Create log entry matching BigQuery schema
@@ -100,24 +99,8 @@ function logRequestDetails(request, backendUrl, requestBody) {
     // Test parse to ensure JSON is valid
     JSON.parse(logMessage);
     
-    // Check if JSON is too large (BigQuery has limits)
-    if (logMessage.length > 100000) { // 100KB limit
-      const truncatedLog = {
-        log_id: generateLogId(),
-        timestamp: new Date().toISOString(),
-        log_type: "REQUEST",
-        request_method: request.method,
-        request_url: request.url,
-        backend_url: backendUrl,
-        error_message: "Log entry too large, truncated",
-        created_at: new Date().toISOString(),
-        partition_date: new Date().toISOString().split('T')[0]
-      };
-      logger.log(JSON.stringify(truncatedLog));
-    } else {
-      // Log to Fastly real-time logging (for production) - matches BigQuery schema
-      logger.log(logMessage);
-    }
+    // Log to Fastly real-time logging (for production) - matches BigQuery schema
+    logger.log(logMessage);
   } catch (jsonError) {
     // If JSON is invalid, log a simplified version
     const fallbackLog = {
@@ -319,8 +302,7 @@ async function logResponseDetails(response, responseBody) {
     try {
       parsedBody = JSON.parse(responseBody);
     } catch {
-      // If body is not JSON, truncate it to prevent issues
-      parsedBody = responseBody.length > 10000 ? responseBody.substring(0, 10000) + "..." : responseBody;
+      parsedBody = responseBody;
     }
     
     const responseLog = {
@@ -340,23 +322,7 @@ async function logResponseDetails(response, responseBody) {
     // Validate JSON before logging
     try {
       JSON.parse(logMessage);
-      
-      // Check if JSON is too large (BigQuery has limits)
-      if (logMessage.length > 100000) { // 100KB limit
-        const truncatedLog = {
-          log_id: generateLogId(),
-          timestamp: new Date().toISOString(),
-          log_type: "RESPONSE",
-          response_status: response.status,
-          response_status_text: response.statusText,
-          error_message: "Log entry too large, truncated",
-          created_at: new Date().toISOString(),
-          partition_date: new Date().toISOString().split('T')[0]
-        };
-        logger.log(JSON.stringify(truncatedLog));
-      } else {
-        logger.log(logMessage);
-      }
+      logger.log(logMessage);
     } catch (jsonError) {
       const fallbackLog = {
         log_id: generateLogId(),
