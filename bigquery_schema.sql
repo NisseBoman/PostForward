@@ -14,13 +14,13 @@ CREATE TABLE IF NOT EXISTS `se-development-9566.nboman_demo.vladlen_dataset`
   request_method STRING,
   request_url STRING,
   backend_url STRING,
-  request_headers JSON,
+  request_headers STRING,
   request_body STRING,
   
   -- Response-specific fields (for RESPONSE log_type)
   response_status INT64,
   response_status_text STRING,
-  response_headers JSON,
+  response_headers STRING,
   response_body STRING,
   
   -- Error-specific fields (for all ERROR log_types)
@@ -96,10 +96,18 @@ WHERE l1.log_type = 'REQUEST'
 GROUP BY request_url
 ORDER BY request_count DESC;
 
--- 6. Header analysis - most common request headers
+-- 6. Header analysis - most common request headers (using STRING fields)
 SELECT 
-  JSON_EXTRACT_SCALAR(request_headers, '$.content_type') as content_type,
-  JSON_EXTRACT_SCALAR(request_headers, '$.user_agent') as user_agent,
+  CASE 
+    WHEN request_headers LIKE '%content_type:%' THEN 
+      REGEXP_EXTRACT(request_headers, r'content_type:\s*([^\n]+)')
+    ELSE NULL 
+  END as content_type,
+  CASE 
+    WHEN request_headers LIKE '%user_agent:%' THEN 
+      REGEXP_EXTRACT(request_headers, r'user_agent:\s*([^\n]+)')
+    ELSE NULL 
+  END as user_agent,
   COUNT(*) as request_count
 FROM `se-development-9566.nboman_demo.vladlen_dataset`
 WHERE log_type = 'REQUEST'

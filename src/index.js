@@ -66,13 +66,15 @@ async function handleRequest(event) {
 }
 
 function logRequestDetails(request, backendUrl, requestBody) {
-  const headers = {};
+  // Convert headers to a single string for BigQuery STRING field
+  const headersArray = [];
   for (const [key, value] of request.headers.entries()) {
     // Ensure header key and value are strings and sanitize for JSON
     const sanitizedKey = String(key).replace(/[^\w\-]/g, '_');
     const sanitizedValue = String(value).replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-    headers[sanitizedKey] = sanitizedValue;
+    headersArray.push(`${sanitizedKey}: ${sanitizedValue}`);
   }
+  const headersString = headersArray.join('\n');
   
   // Create log entry matching BigQuery schema
   const logEntry = {
@@ -82,7 +84,7 @@ function logRequestDetails(request, backendUrl, requestBody) {
     request_method: request.method,
     request_url: request.url,
     backend_url: backendUrl,
-    request_headers: headers,
+    request_headers: truncateString(headersString, 2000000), // Truncate to 2MB limit
     request_body: truncateString(requestBody, 2000000), // Truncate to 2MB limit
     created_at: new Date().toISOString(),
     partition_date: new Date().toISOString().split('T')[0]
@@ -127,7 +129,7 @@ function logRequestDetails(request, backendUrl, requestBody) {
     method: request.method,
     url: request.url,
     backendUrl: backendUrl,
-    headers: headers,
+    headers: headersString,
     body: parsedBody
   }, null, 2));
 }
@@ -268,13 +270,15 @@ async function forwardRequest(request, backendUrl, requestBody) {
 
 async function logResponseDetails(response, responseBody) {
   try {
-    const headers = {};
+    // Convert headers to a single string for BigQuery STRING field
+    const headersArray = [];
     for (const [key, value] of response.headers.entries()) {
       // Ensure header key and value are strings and sanitize for JSON
       const sanitizedKey = String(key).replace(/[^\w\-]/g, '_');
       const sanitizedValue = String(value).replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-      headers[sanitizedKey] = sanitizedValue;
+      headersArray.push(`${sanitizedKey}: ${sanitizedValue}`);
     }
+    const headersString = headersArray.join('\n');
     
     // Check if response is valid
     if (!response || !response.ok) {
@@ -320,7 +324,7 @@ async function logResponseDetails(response, responseBody) {
       log_type: "RESPONSE",
       response_status: response.status,
       response_status_text: response.statusText,
-      response_headers: headers,
+      response_headers: truncateString(headersString, 2000000), // Truncate to 2MB limit
       response_body: truncateString(responseBody, 2000000), // Truncate to 2MB limit
       created_at: new Date().toISOString(),
       partition_date: new Date().toISOString().split('T')[0]
@@ -357,7 +361,7 @@ async function logResponseDetails(response, responseBody) {
       type: "RESPONSE",
       status: response.status,
       statusText: response.statusText,
-      headers: headers,
+      headers: headersString,
       body: parsedBody
     }, null, 2));
   } catch (error) {
