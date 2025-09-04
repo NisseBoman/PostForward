@@ -68,7 +68,10 @@ async function handleRequest(event) {
 function logRequestDetails(request, backendUrl, requestBody) {
   const headers = {};
   for (const [key, value] of request.headers.entries()) {
-    headers[key] = value;
+    // Ensure header key and value are strings and sanitize for JSON
+    const sanitizedKey = String(key).replace(/[^\w\-]/g, '_');
+    const sanitizedValue = String(value).replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+    headers[sanitizedKey] = sanitizedValue;
   }
   
   let parsedBody;
@@ -257,7 +260,10 @@ async function logResponseDetails(response, responseBody) {
   try {
     const headers = {};
     for (const [key, value] of response.headers.entries()) {
-      headers[key] = value;
+      // Ensure header key and value are strings and sanitize for JSON
+      const sanitizedKey = String(key).replace(/[^\w\-]/g, '_');
+      const sanitizedValue = String(value).replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+      headers[sanitizedKey] = sanitizedValue;
     }
     
     // Check if response is valid
