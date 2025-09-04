@@ -1,0 +1,25 @@
+{
+  "name": "postforward",
+  "description": "Fastly Edge Compute application that forwards POST requests to a dynamic backend with comprehensive logging",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "keywords": ["fastly", "edge-compute", "post-forwarding", "webhook", "logging"],
+  "author": "nisse@tnfgruppen.com",
+  "license": "MIT",
+  "dependencies": {
+    "@fastly/js-compute": "^3.33.2"
+  },
+  "devDependencies": {
+    "@fastly/cli": "^11.0.0"
+  },
+  "scripts": {
+    "build": "js-compute-runtime --enable-aot ./src/index.js ./bin/main.wasm",
+    "start": "fastly compute serve",
+    "deploy": "fastly compute publish",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "description": "Google BigQuery Schema for PostForward Logging",
+  "fields": [
+    {
+      "name": "log_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Unique identifier for each log entry"
+    },
+    {
+      "name": "timestamp",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "ISO timestamp from the log"
+    },
+    {
+      "name": "log_type",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "REQUEST, RESPONSE, RESPONSE_ERROR, RESPONSE_LOG_ERROR"
+    },
+    {
+      "name": "request_method",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "HTTP method (POST)"
+    },
+    {
+      "name": "request_url",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Full request URL"
+    },
+    {
+      "name": "backend_url",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Target backend URL"
+    },
+    {
+      "name": "response_status",
+      "type": "INTEGER",
+      "mode": "NULLABLE",
+      "description": "HTTP status code"
+    },
+    {
+      "name": "response_status_text",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "HTTP status text"
+    },
+    {
+      "name": "error_message",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Error description"
+    },
+    {
+      "name": "error_type",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Type of error"
+    },
+    {
+      "name": "request_headers",
+      "type": "JSON",
+      "mode": "NULLABLE",
+      "description": "Request headers as JSON object"
+    },
+    {
+      "name": "response_headers",
+      "type": "JSON",
+      "mode": "NULLABLE",
+      "description": "Response headers as JSON object"
+    },
+    {
+      "name": "request_body",
+      "type": "JSON",
+      "mode": "NULLABLE",
+      "description": "Request body (parsed if JSON, raw if not)"
+    },
+    {
+      "name": "response_body",
+      "type": "JSON",
+      "mode": "NULLABLE",
+      "description": "Response body (parsed if JSON, raw if not)"
+    },
+    {
+      "name": "created_at",
+      "type": "TIMESTAMP",
+      "mode": "NULLABLE",
+      "description": "When record was inserted"
+    },
+    {
+      "name": "partition_date",
+      "type": "DATE",
+      "mode": "NULLABLE",
+      "description": "For partitioning"
+    }
+  ]
+}

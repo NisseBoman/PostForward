@@ -1,0 +1,16 @@
+# This file describes a Fastly Compute package. To learn more visit:
+# https://www.fastly.com/documentation/reference/compute/fastly-toml
+
+authors = ["nisse@tnfgruppen.com"]
+cloned_from = "https://github.com/fastly/compute-starter-kit-javascript-empty"
+description = "A high-performance Fastly Edge Compute application that forwards POST requests to a dynamic backend with comprehensive logging"
+language = "javascript"
+manifest_version = 3
+name = "PostForward"
+service_id = "KiNZBxGoxyrMkn0Id8yhr5"
+
+[local_server]
+
+[scripts]
+  build = "npm run build"
+  post_init = "npm install"
